@@ -38,10 +38,10 @@ int mkfifo(const char *pathname, mode_t mode);
 
 ````c
 #include <sys/types.h>
-       #include <sys/stat.h>
-       #include <fcntl.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-       int open(const char *pathname, int flags);
+int open(const char *pathname, int flags);
 // 实际例子 demo6.c,write.c read.c
 ````
 
