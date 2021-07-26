@@ -14,14 +14,16 @@ typedef struct msgbuf {
 
 int main(){
 	msgbuf readBuf,sendBuf = {888,"this is the message from quen"};
-
-	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
+	key_t key;
+	key = ftok(".",'z');
+	printf("key = %x\n",key);
+	int msgId = msgget(key,IPC_CREAT|0777); // 创建队列
 	if(msgId == -1){
 		printf("get que failuer\n");
 	}
 	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);		/* 非阻塞的方式发送 */
 	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),887,0);
 	printf("return from get : %s \n",readBuf.mtext);
-
+	msgctl(msgId,IPC_RMID,NULL);
 	return 0;
 }

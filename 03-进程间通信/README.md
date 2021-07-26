@@ -73,3 +73,160 @@ int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
 int msgctl(int msqid, int cmd, struct msqid_ds *buf);
 ~~~
 
+* 一个案例   
+
+  * **msgGet.c**
+
+  ````c
+  #include <stdio.h>
+  #include <sys/types.h>
+  #include <sys/ipc.h>
+  #include <sys/msg.h>
+  
+  // int msgget(key_t key, int msgflg);	/*创建一个消息队列*/
+  // int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);	/*发送一个消息*/
+  // ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,int msgflg);	/*接收消息*/
+  
+  typedef struct msgbuf {
+                long mtype;       /* message type, must be > 0 */
+                char mtext[128];    /* message data */
+  }msgbuf;
+  
+  int main(){
+  	msgbuf readBuf;
+  	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
+  	if(msgId == -1){
+  		printf("get que failuer\n");
+  	}
+  	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),888,0);		/*0 以默认的方式读取消息（阻塞）*/
+  	printf("read from que:%s\n",readBuf.mtext);
+  
+  	return 0;
+  }
+  ````
+
+  * **msgSend.c**
+
+  ```c
+  #include <stdio.h>
+  #include <sys/types.h>
+  #include <sys/ipc.h>
+  #include <sys/msg.h>
+  
+  // int msgget(key_t key, int msgflg);	/*创建一个消息队列*/
+  // int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);	/*发送一个消息*/
+  // ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,int msgflg);	/*接收消息*/
+  
+  typedef struct msgbuf {
+                long mtype;       /* message type, must be > 0 */
+                char mtext[128];    /* message data */
+  }msgbuf;
+  
+  int main(){
+  	msgbuf sendBuf = {888,"this is the message from quen"};
+  
+  	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
+  	if(msgId == -1){
+  		printf("get que failuer\n");
+  	}
+  	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);		/* 非阻塞的方式发送 */
+  	return 0;
+  }
+  ```
+
+**在 Linux 中可以使用 vimdiff 文件1  文件2  来比较两个文件的不同之处**
+
+### ftok 函数的简介
+
+**系统IPC键值的格式转换函数**:系统建立IPC通讯 （[消息队列](https://baike.baidu.com/item/消息队列)、[信号量](https://baike.baidu.com/item/信号量)和[共享内存](https://baike.baidu.com/item/共享内存)） 时必须指定一个ID值。通常情况下，该id值通过ftok函数得到
+
+> **函数原型**：key_t ftok( const char * fname, int id )     // 第二个参数只要是常量就行
+
+**key值的构成**：在一般的UNIX实现中，是将文件的[索引节点](https://baike.baidu.com/item/索引节点)号取出，前面加上子序号得到key_t的返回值。如指定文件的索引节点号为65538，换算成16进制为0x010002，而你指定的ID值为38，换算成16进制为0x26，则最后的key_t返回值为0x26010002。
+
+**上面的例子改进之后：**
+
+* key_msgSend.c
+
+```c
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+// int msgget(key_t key, int msgflg);	/*创建一个消息队列*/
+// int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);	/*发送一个消息*/
+// ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,int msgflg);	/*接收消息*/
+
+typedef struct msgbuf {
+              long mtype;       /* message type, must be > 0 */
+              char mtext[128];    /* message data */
+}msgbuf;
+
+int main(){
+	msgbuf readBuf,sendBuf = {888,"this is the message from quen"};
+	key_t key;
+	key = ftok(".",'z');
+	printf("key = %x\n",key);
+	int msgId = msgget(key,IPC_CREAT|0777); // 创建队列
+	if(msgId == -1){
+		printf("get que failuer\n");
+	}
+	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);		/* 非阻塞的方式发送 */
+	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),887,0);
+	printf("return from get : %s \n",readBuf.mtext);
+
+	return 0;
+}
+```
+
+* key_msgGet.c
+
+```c
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+// int msgget(key_t key, int msgflg);	/*创建一个消息队列*/
+// int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);	/*发送一个消息*/
+// ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,int msgflg);	/*接收消息*/
+
+typedef struct msgbuf {
+              long mtype;       /* message type, must be > 0 */
+              char mtext[128];    /* message data */
+}msgbuf;
+
+// 现在把key 写死的 就是那个888 887，后面可以用函数(ftok)生成key
+int main(){
+	msgbuf readBuf,sendBuf={887,"我收到消息了"};
+	key_t key;
+	key = ftok(".",'z');
+	printf("key = %x\n",key);
+	int msgId = msgget(key,IPC_CREAT|0777); // 创建队列
+	if(msgId == -1){
+		printf("get que failuer\n");
+	}	
+	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),888,0);		/*0 以默认的方式读取消息（阻塞）*/
+	printf("read from que:%s\n",readBuf.mtext);
+	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);
+
+	return 0;
+}
+```
+
+### msgctl 销毁队列
+
+```c
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+ int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+// cmd的列表：
+    IPC_STAT
+    IPC_SET
+    IPC_RMID			// 最常用，就是把消息队列用完之后在内核中移除
+    IPC_INFD
+    .......
+```
+

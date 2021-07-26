@@ -12,16 +12,19 @@ typedef struct msgbuf {
               char mtext[128];    /* message data */
 }msgbuf;
 
+// 现在把key 写死的 就是那个888 887，后面可以用函数(ftok)生成key
 int main(){
-	msgbuf readBuf,sendBuf = {888,"this is the message from quen"};
-
-	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
+	msgbuf readBuf,sendBuf={887,"我收到消息了"};
+	key_t key;
+	key = ftok(".",'z');
+	printf("key = %x\n",key);
+	int msgId = msgget(key,IPC_CREAT|0777); // 创建队列
 	if(msgId == -1){
 		printf("get que failuer\n");
-	}
-	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);		/* 非阻塞的方式发送 */
-	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),887,0);
-	printf("return from get : %s \n",readBuf.mtext);
-
+	}	
+	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),888,0);		/*0 以默认的方式读取消息（阻塞）*/
+	printf("read from que:%s\n",readBuf.mtext);
+	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);
+	msgctl(msgId,IPC_RMID,NULL);
 	return 0;
 }

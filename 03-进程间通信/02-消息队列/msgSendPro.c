@@ -9,17 +9,19 @@
 
 typedef struct msgbuf {
               long mtype;       /* message type, must be > 0 */
-              char mtext[128];    /* message data */
+              char mtext[1024];    /* message data */
 }msgbuf;
 
 int main(){
-	msgbuf readBuf,msgBuf;
+	msgbuf readBuf,sendBuf={887,"我收到消息了"};
+	scanf("%s",&sendBuf.mtext);
 	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
 	if(msgId == -1){
 		printf("get que failuer\n");
-	}
+	}	
 	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),888,0);		/*0 以默认的方式读取消息（阻塞）*/
 	printf("read from que:%s\n",readBuf.mtext);
+	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);
 
 	return 0;
 }

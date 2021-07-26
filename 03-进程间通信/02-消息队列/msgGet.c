@@ -12,14 +12,18 @@ typedef struct msgbuf {
               char mtext[128];    /* message data */
 }msgbuf;
 
+// 现在把key 写死的 就是那个888 887，后面可以用函数(ftok)生成key
 int main(){
-	msgbuf readBuf;
+	msgbuf readBuf,sendBuf={887,"我收到消息了"};
 	int msgId = msgget(0x1234,IPC_CREAT|0777); // 创建队列
 	if(msgId == -1){
 		printf("get que failuer\n");
-	}
+	}	
 	msgrcv(msgId,&readBuf,sizeof(readBuf.mtext),888,0);		/*0 以默认的方式读取消息（阻塞）*/
 	printf("read from que:%s\n",readBuf.mtext);
+	msgsnd(msgId,&sendBuf,sizeof(sendBuf.mtext),0);
 
 	return 0;
 }
+
+// 互通的话不能把消息类型设置为一样，如果设置为一样就是自己读自己，就成了一个环
