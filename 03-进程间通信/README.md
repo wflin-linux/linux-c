@@ -1,4 +1,4 @@
-# 进程间通信原理
+# 进程间通信方式
 ## 进程通信介绍(IPC)
  * ## 主要方式：管道(有名管道和无名管道)、消息队列、信号量、共享内存、Socket、Streams等。其中Socket 和 Steams 支持不同主机上的两个进程IPC
 
@@ -229,4 +229,29 @@ int main(){
     IPC_INFD
     .......
 ```
+
+
+
+## 四、共享内存
+
+* **常用api**
+
+  ```c
+  #include <sys/ipc.h>
+  #include <sys/shm.h>
+  
+  // 创建或获取一个共享内存：成功返回共享内存ID，失败返回 -1
+  int shmget(key_t key, size_t size, int shmflg);
+  
+  // 连接共享内存到当前进程的地址空间：成功返回指向共享内存的指针，失败返回 -1
+  void *shmat(int shmid, const void *shmaddr, int shmflg);
+  
+  // 断开与共享内存的连接：成功返回0，失败返回 -1
+  int shmdt(const void *shmaddr);
+  
+  // 控制共享内存相关信息：成功返回0，失败返回-1
+  int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+  ```
+
+  
 
