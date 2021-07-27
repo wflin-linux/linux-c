@@ -253,5 +253,153 @@ int main(){
   int shmctl(int shmid, int cmd, struct shmid_ds *buf);
   ```
 
+
+## 五、信号
+
+[推荐博文](https://www.jianshu.com/p/f445bfeea40a)
+
+对于Linux来说，实际的信号是软中断，喜多重要程序都需要信号处理。信号，为Linux提供了一种处理异步事件的方法。比如，终端用户输入了ctrl + c 来中断程序，会通过信号机制停止一个程序。
+
+### **信号的概述**：
+
+**1、信号的名字和编号：**每个信号都有一个名字和编号，这些名字都以“SIG”开头，例如“SIGIO ”、“SIGCHLD”等等。信号名都定义为正整数。 具体的信号名称可以使用`kill -l`来查看信号的名字以及序号，信号是从1开始编号的，不存在0号信号。kill对于信号0又特殊的应用，用于系统层面的中断。
+
+应用层来说信号是从 1-64：
+
+```shell
+$ kill  -l  # 查看系统中所以的信号
+
+1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP
+ 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1
+11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP
+21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR
+31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX
+```
+
+
+
+**2、信号处理的方式**：忽略，捕捉，默认动作
+
+**忽略信号**：大多数信号可以使用这个方式来处理，但是有两种信号不能被忽略（分别是 `SIGKILL`和`SIGSTOP`）。因为他们向内核和超级用户提供了进程终止和停止的可靠方法，如果忽略了，那么这个进程就变成了没人能管理的的进程，显然是内核设计者不希望看到的场景。
+
+**捕捉信号**：需要告诉内核，用户希望如何处理某一种信号，说白了就是写一个信号处理函数，然后将这个函数告诉内核。当该信号产生时，由内核来调用用户自定义的函数，以此来实现某种信号的处理。
+
+**系统默认动作**：对于每个信号来说，系统都对应由默认的处理动作，当发生了该信号，系统会自动执行。不过，对系统来说，**大部分**的处理方式都比较粗暴，就是直接杀死该进程。具体的信号默认动作可以使用`man 7 signal`来查看系统的具体定义。在此，我就不详细展开了，需要查看的，可以自行查看。也可以参考 《UNIX 环境高级编程（第三部）》的 P251——P256中间对于每个信号有详细的说明。
+
+**3、使用信号**
+
+```shell
+# 使用消息队列的代码演示
+# 运行程序
+$./get
+key = 29536
+
+
+# 查找程序的pid
+$ ps  -aux|grep get
+wflin      1891  0.0  0.3 1860204 13636 ?       Sl   09:29   0:16 /usr/bin/pulseaudio --start --log-target=syslog
+wflin     29536  0.0  0.0   4512   804 pts/0    S+   15:44   0:00 ./get
+wflin     29540  0.0  0.0  16184  1076 pts/1    S+   15:44   0:00 grep --color=auto get
+
+# 杀死程序(9的原因是信号中 SGKILL 的代号是 9 ，代指杀死信号,kill 指令也是可以用来向系统发送信号，见 signalDemo2.c )
+$ kill  -9  29536
+
+# get 程序的执行结果是
+killed 
+```
+
+### 信号处理函数
+
+**入门版本**：函数   **signal**
+
+**高级版本**：函数    **sigaction**
+
+#### **入门版本编程实战：**
+
+```c
+// 无返回值的指针函数，传入一个 int 型变量 
+typedef void (*sighandler_t)(int);
+
+// 第一个参数是信号类型，第二个参数是
+sighandler_t signal(int signum, sighandler_t handler);
+
+```
+
+* 样例程序 ctrl + c 杀不死进程  (1) 捕捉信号之后改默认
+
+  ```c
+  // 模拟键盘按下ctrl + c 无法停止进程
   
+  #include <signal.h>
+  #include <stdio.h>
+  
+  // typedef void (*sighandler_t)(int);
+  
+  // sighandler_t signal(int signum, sighandler_t handler);
+  
+  // 修改默认的处理函数，也就是如果按ctrl+c 就执行handler函数不结束。
+  void handler (int signum){
+  	printf("get signum = %d\n",signum);
+  	switch(signum){
+  		case 2:
+  			printf("SIGINT\n");
+  			break;
+  		case 9:
+  			printf("SIGKILL\n");
+  			break;
+  		case 10:
+  			printf("SIGUSR1\n");
+  			break;
+  	}
+  	printf("never quit\n");
+  }
+  
+  int main(){
+  	signal(SIGINT,handler);	//信号注册
+  	signal(SIGKILL,handler);
+  	signal(SIGUSR1,handler);
+  	while(1);
+  	return 0;
+  ```
+
+* 样例程序 ctrl + c 杀不死进程  (1) 忽略 ctl+c 的信号
+
+  ```c
+  #include <signal.h>
+  #include <stdio.h>
+  int main(){
+  
+         signal(SIGKILL,SIG_IGN); // 杀死依然无法忽略
+         signal(SIGINT,SIG_IGN);
+         while(1);
+         return 0;
+  }
+  ```
+
+#### **高级版本实战**
+
+**常用api**
+
+```c
+#include <signal.h>
+
+// 参数说明 signum 信号值，第一个 sigaction 绑定消息和参数，第二个sigaction 备份原有的信号操作，如果不需要传入NULL
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+
+struct sigaction {
+   void       (*sa_handler)(int); //信号处理程序，不接受额外数据，SIG_IGN 为忽略，SIG_DFL 为默认动作
+   void       (*sa_sigaction)(int, siginfo_t *, void *); //信号处理程序，能够接受额外数据和sigqueue配合使用
+   sigset_t   sa_mask;//阻塞关键字的信号集，可以再调用捕捉函数之前，把信号添加到信号阻塞字，信号捕捉函数返回之前恢复为原先的值。
+   int        sa_flags;//影响信号的行为SA_SIGINFO表示能够接受数据
+ };
+//回调函数句柄sa_handler、sa_sigaction只能任选其一
+```
 
