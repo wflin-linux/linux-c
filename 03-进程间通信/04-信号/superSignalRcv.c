@@ -2,6 +2,9 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 // int sigqueue(pid_t pid, int sig, const union sigval value);
 
@@ -17,6 +20,6 @@ int main(int argc,int **argv)
 	value.sival_int = 100;
 
 	sigqueue(pid,signum,value);
-	printf("收到！");
+	printf("收到！\n");
 	return 0;
 }
