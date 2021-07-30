@@ -77,3 +77,85 @@ int pthread_join(pthread_t thread, void **rval_ptr);
 
 　　如果**对线程的返回值不感兴趣，可以把rval_ptr置为NULL**。在这种情况下，**调用pthread_join函数将等待指定的线程终止**，**但并不获得线程的终止状态。**
 
+## 与互斥锁相关API
+
+　　**互斥量（mutex）从本质上来说是一把锁**，在**访问共享资源前对互斥量进行加锁**，在**访问完成后释放互斥量上的锁**。对互斥量进行**加锁后，任何其他试图再次对互斥量加锁的线程将会被阻塞直到当前线程释放该互斥锁**。**如果释放互斥锁时有多个线程阻塞**，所有在该互斥锁上的阻塞线程都会变成可运行状态，**第一个变为可运行状态的线程可以对互斥量加锁**，**其他线程将会看到互斥锁依然被锁住**，只能回去等待它重新变为可用。在这种方式下，每次只有一个线程可以向前运行。在设计时需要规定所有的线程必须遵守相同的数据访问规则。只有这样，互斥机制才能正常工作。操作系统并不会做数据访问的串行化。
+
+　　**互斥变量用pthread_mutex_t数据类型**表示。在使用互斥变量前必须对它进行初始化，可以把它置为**常量PTHREAD_MUTEX_INITIALIZER**（只对静态分配的互斥量），也可以通过调用pthread_mutex_init函数进行初始化。如果动态地分配互斥量（例如通过调用malloc函数），那么在释放内存前需要调用pthread_mutex_destroy。
+
+　**1.  创建及\**销毁\**互斥锁**
+
+```c
+#include <pthread.h>
+int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
+int pthread_mutex_destroy(pthread_mutex_t* mutex);
+// 返回：若成功返回0，否则返回错误编号
+```
+
+　　要用默认的属性初始化互斥量，只需把attr设置为NULL。　　
+
+　　**2. 加锁及解锁**
+
+```c
+#include <pthread.h>
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+// 返回：若成功返回0，否则返回错误编号
+```
+
+
+
+
+
+## 编程实战
+
+**编译多线程文件的方法：gcc name.c -lpthread.c**
+
+1. **create_pthread()**
+
+   ```c
+   ret = pthread_create(&t1,NULL,funct1,(void *)&parm);   
+   // 第一个参数是 线程代号t1  ,第二个参数是线程记录线程创建时的相关信息，一般使用NULL 不做记录。第三个是对该线程传入的操作函数。最后一个参数，传参时如果只是传递一个参数(parm )，就传入基本的char，int....，若果传入多个参数就需要传入结构体
+   
+   (unsigned long)pthread_self()	// 打印线程的id，这个线程号返回值是长整型
+    // 注意点：其他线程的打印信息应该在主线成结束之前打印出来，如果主线程在其他线程之前结束，那么其他线程的打印信息就不会打印出来，所以如果其他线程没有打印出改打印的信息，那么有可能就是主线程提前退出，可以测试 案例 Create_pthread.c 中的while(1) 注释，查看区别
+   ```
+
+   
+
+2. **join_pthread()**
+
+   ```c
+   // 在退出线程之前把数据传入主线程时，需要的是用static关键字对线程中地址进行限定，用来由主线程中相关的地址指向其他线程的数据地址用来获取其他线程的数据
+   void pthread_exit(void *retval);
+   // 第二个参数是一个void 类型的二级指针。所以转换指针类型时一定要注意转换，不然会产生段错误（core dump）
+    int pthread_join(pthread_t thread, void **retval);
+   // 多个线程的时候调用 pthread_exit() 可能也不会让线程退出，比如多个线程操作同一个数据，当数据达到某一个只时退出，但是线程的启动目前是随机的，所以不一定那个数值达到退出时，恰好被该线程调用
+   ```
+
+   
+
+3. **互斥锁**
+
+   ```c
+   int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);			//创建锁
+   int pthread_mutex_destroy(pthread_mutex_t mutex);	//销毁锁
+   int pthread_mutex_lock(pthread_mutex_t mutex);	//上锁
+   int pthread_mutex_unlock(pthread_mutex_t mutex);	// 解锁
+   // 锁就是让一个线程的代码全部执行完成之后再执行其他的线程的代码。并不是锁定线程执行的顺序，线程的启动还是随机的
+   ```
+
+   
+
+4. **造成死锁原因**
+
+   首先程序中必须有两把锁，当线程1获得一把锁的时候还想要获得另一把锁，线程2手中拿着线程1想要获得的那把锁，同时线程2也想拿到线程1的那把锁。然后都不能往下去解锁，造成线程死锁 案例请看 	mutex_die_Pthread.c
+
+5. 
+
+6. 
+
+7. 
+
+8. 
