@@ -159,4 +159,25 @@ int main(int argc, char const *argv[])
     * #define INET6_ADDRSTRLEN    //for ipv6
   ```
 
+  ```c
+  #include <stdio.h>
+  #include <arpa/inet.h>
+  
+  int main(int argc, char const *argv[])
+  {
+      unsigned char buf[] = {192, 168, 33, 100};
+      char ip_buf[16] = "";
+  
+      inet_ntop(AF_INET, buf, ip_buf, 16);
+      printf("ipbuf = %s\n", ip_buf);
+      return 0;
+  }
+  ```
+
+## udp
+
+* 相比 tcp 速度稍快
+* 简单的请求应答程序可以使用 udp
+* 对于海量数据传输不应该使用 udp
+* 广播和多播必须使用 udp udp 应用DNS(域名解析)，NFS(网络文件系统)，RTP(流媒体)等
 * 
