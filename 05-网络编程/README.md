@@ -1,3 +1,5 @@
+
+
 # 字节序
 
 * 大端小端都叫主机字节序
@@ -174,10 +176,119 @@ int main(int argc, char const *argv[])
   }
   ```
 
+## 网络通信需要解决的3大问题(应用层)
+
+* 协议，端口，IP地址
+* socket 套接字是一个特殊的文件描述符，可以使用 open，write，read，close 进行网络通信
+* 通过 socket 函数调用得到这个网络通信的文件描述符(套接字)
+
 ## udp
 
 * 相比 tcp 速度稍快
 * 简单的请求应答程序可以使用 udp
 * 对于海量数据传输不应该使用 udp
 * 广播和多播必须使用 udp udp 应用DNS(域名解析)，NFS(网络文件系统)，RTP(流媒体)等
-* 
+
+### udp 的编程api
+
+```c
+#include<sys/socket.h>
+int socket(int domain,int type,int protocol)
+```
+
+参数
+
+* domain协议族：协议AF_INET IPV4     AF_INET6 IPV6
+* type 类型：
+  * SOCK_DGRAM(udp套接字)
+  * SOCK_STREAM(tcp套接字)
+  * SOCK_RAW(socket套接字)
+* protocol协议类别：（`0`，IPPROTO，IPPROTO_UDP）
+* 返回值：通信的文件描述符 (套接字)，大于0成功，小于0 失败
+
+### ipv4结构地址
+
+存放 ipv4 协议通信的所有地址信息
+
+> #include<netinet/in.h>
+
+```c
+struct sockaddr_in{
+    sa_family_t sin_family; //2字节 协议(AF_INET    AF_INET6)
+    in_port_t sin_port; //2字节 端口
+    struct in_addr sin_addr; //4字节 IP地址(32位无符号整数)
+    char sin_zero[8] // 8字节 //全写0
+}
+```
+
+```c
+struct in_addr{
+    in_addr_t s_addr; //4字节
+}
+```
+
+通用地址结构体
+
+```c
+struct sockaddr{
+    sa_family_t sa_family;  //2字节
+    char sa_data[14];  //14 字节
+}
+```
+
+### 两种地址结构使用场合
+
+* `struct sockaddr_in` IPv4 地址结构(存放客户端，服务器的地址信息（协议，port，IP）)
+* `struct sockaddr` 通用地址结构  不是存放数据 socket API 类型转换
+
+### 发送数据(sendto)
+
+```c
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+```
+
+参数说明
+
+* sockfd：通信套接字
+* buf：需要发送的消息的首元素地址
+* len：消息的实际长度
+* flag：0 网络默认方式通信
+* dest_addr：目的主机的信息（协议，port，ip地址）
+* addrlen：地址结构体的长度
+
+返回值：发送字节数
+
+```c
+#include <stdio.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <arpa/inet.h>
+
+#define port 8000
+#define addr "192.168.10.103"
+
+int main(int argc, char const *argv[])
+{
+    // 创建通信的udp套接字
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    printf("sockd = %d\n", sockfd);
+
+    // udp客户端 发送消息 给服务器
+    //  定义一个ipv4数组结构，存放服务器的地址信息(目的主机)
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;                               // ipv4
+    server_addr.sin_port = htons(port);                             // 服务器端口
+    inet_pton(AF_INET, addr, (void *)&server_addr.sin_addr.s_addr); // 服务器的IP信息
+    char *msg = "hello";
+    sendto(sockfd, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    close(sockfd);
+    return 0;
+}
+```
+
