@@ -48,6 +48,10 @@ int main(int argc, char const *argv[])
 
 ## 转换函数
 
+* 头文件
+
+  > #include<arpa/inet.h>
+
 #### 发消息(主机字节序转网络字节序)
 
 * htons:将两个字节的主机字节序转换成网络字节序
@@ -69,3 +73,90 @@ int main(int argc, char const *argv[])
 * ntohl:将网络字节序的 `ip地址` 转换成主机字节序
 
   > unit16_t ntohl(unit16_t netlong)
+
+```c
+#include <stdio.h>
+#include <arpa/inet.h>
+
+int main(int argc, char const *argv[])
+{
+    unsigned short data = 0x0102;
+    printf("转换结果：%x\n",htons(data));
+    return 0;
+}
+```
+
+## ip地址转换
+
+### ip地址的形式
+
+* "192.168.100.1": 点分十进制数串
+* 网络的ip地址：32位 无符号整型数据
+
+### 将十进制数串 转成 32 位无符号整型数据（默认大端）
+
+>  int inet_pton(int af,const char *src,void *dist)
+
+参数说明
+
+* af：AF_INET IPV4,AF_INET6 IPV6
+* src：点分十进制数串的首元素地址
+* dist：转换结果
+
+返回值
+
+* 成功 1 ，失败其他
+
+```c
+#include <stdio.h>
+#include <arpa/inet.h>
+
+int main(int argc, char const *argv[])
+{
+    char *str = "192.168.33.100";
+    unsigned int addr = 0;
+    //  注意最后一个参数是无符号地址
+    int ret = inet_pton(AF_INET, str, (void *)&addr);
+    if (ret == 1)
+    {
+        printf("地址转换成功：%d\n", addr);
+
+        // 将主机地址转换成可以看懂的地址
+        unsigned char *p = (unsigned char *)&addr;
+        printf("地址还原后是：%d %d %d %d\n", *p, *(p + 1), *(p + 2), *(p + 3));
+    }
+    else
+    {
+        printf("地址转换失败\n");
+    }
+
+    return 0;
+}
+```
+
+* 网络中用无符号的原因
+  * 有符号那个范围是 0-127
+  * 无符号的范围是 0-255 【可能会越界】
+
+### 将32位无符号数据转化成点分十进制的地址
+
+> char *inet_ntop (int af, const void *addrptr,
+> 			      char *strptr, size_t len)
+
+参数说明
+
+* af：AF_INET IPV4,AF_INET6 IPV6
+
+* addrptr：32位无符号整型数的地址
+
+* strptr：点分十进制地址
+
+* len：点分十进制的最大长度(16)
+
+  ```markdown
+  # len的宏定义
+    * #define INET_ADDRSTRLEN 16  //for ipv4
+    * #define INET6_ADDRSTRLEN    //for ipv6
+  ```
+
+* 
