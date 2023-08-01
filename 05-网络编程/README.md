@@ -184,10 +184,13 @@ int main(int argc, char const *argv[])
 
 ## udp
 
-* 相比 tcp 速度稍快
-* 简单的请求应答程序可以使用 udp
-* 对于海量数据传输不应该使用 udp
-* 广播和多播必须使用 udp udp 应用DNS(域名解析)，NFS(网络文件系统)，RTP(流媒体)等
+* 面向无连接的用户数据协议，在传输数据前不需要先建立连接；目的主机的运输层收到 UDP 报文后，不需要给出任何确认
+* 特点
+  * 相比 tcp 速度稍快
+  * 简单的请求应答程序可以使用 udp
+  * 对于海量数据传输不应该使用 udp
+  * 广播和多播必须使用 udp udp 应用DNS(域名解析)，NFS(网络文件系统)，RTP(流媒体)等
+  * 一般语音或者视频通话使用udp
 
 ### udp 的编程api
 
@@ -291,4 +294,124 @@ int main(int argc, char const *argv[])
     return 0;
 }
 ```
+
+网络调试助手信息
+
+```txt
+[2023-07-28 03:15:33.382]# RECV ASCII FROM 192.168.10.103 :52976>
+hello
+```
+
+从上面的结果分析：
+
+* 服务器收到客户端的信息，而且客户端的 port 是随机的
+* 如果 udp 套接字 不适用 bind 函数绑定固定端口，那么再第一次调用 sendto 昔日会自动给套接字分配一个随机端口，后续 sendto 继续使用前一次的端口
+
+```txt
+[2023-07-28 03:22:42.339]# RECV ASCII FROM 192.168.10.103 :64501>
+hello
+
+[2023-07-28 03:22:42.342]# RECV ASCII FROM 192.168.10.103 :64501>
+world
+```
+
+### udp 绑定固定端口
+
+```c
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+
+int bind(int sockfd, const struct sockaddr *addr,
+                socklen_t addrlen);
+```
+
+返回值 成功返回 0 ，失败返回 -1
+
+部分代码
+
+```c
+// 定义一个ipv4 的地址结构，存放本机信息
+struct sockaddr_in my_addr;
+
+// 这个函数也可以清空数据
+bzero(&my_addr, sizeof(my_addr));
+// 给udp 套接字绑定一个固定的地址信息
+my_addr.sin_family = AF_INET;
+my_addr.sin_port = htons(9000);
+my_addr.sin_addr.s_addr = htonl(INADDR_ANY); // 所有的地址都可以收到
+bind(sockfd, (struct sockaddr *)&my_addr, sizeof(my_addr));
+
+```
+
+全部代码（注意防火墙）
+
+```c
+#include <stdio.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <strings.h>
+#include <arpa/inet.h>
+
+#define port 8000
+#define addr "192.168.100.1"
+
+int main(int argc, char const *argv[])
+{
+    // 创建通信的udp套接字
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    printf("sockd = %d\n", sockfd);
+
+    // 定义一个ipv4 的地址结构，存放本机信息
+    struct sockaddr_in my_addr;
+
+    // 这个函数也可以清空数据
+    bzero(&my_addr, sizeof(my_addr));
+    // 给udp 套接字绑定一个固定的地址信息
+    my_addr.sin_family = AF_INET;
+    my_addr.sin_port = htons(9000);
+    my_addr.sin_addr.s_addr = htonl(INADDR_ANY); // 所有的地址都可以收到
+    bind(sockfd, (struct sockaddr *)&my_addr, sizeof(my_addr));
+
+    // udp客户端 发送消息 给服务器
+    //  定义一个ipv4数组结构，存放服务器的地址信息(目的主机)
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;                               // ipv4
+    server_addr.sin_port = htons(port);                             // 服务器端口
+    inet_pton(AF_INET, addr, (void *)&server_addr.sin_addr.s_addr); // 服务器的IP信息
+    char msg[128] = "hello";
+    sendto(sockfd, msg, strlen(msg), 0, (struct sockaddr *)&my_addr, sizeof(my_addr));
+    strcpy(msg, "world");
+    sendto(sockfd, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    close(sockfd);
+    return 0;
+}
+```
+
+### recvfrom接收udp消息
+
+如果 udp 不发数据前 就要接受消息 必须对 udp 套接字进行绑定
+
+```c
+#include <sys/types.h>
+#include <sys/socket.h>
+
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+
+ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                 struct sockaddr *src_addr, socklen_t *addrlen);
+
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+```
+
+参数说明：
+
+* sockfd：通信套接字
+* buf：接收消息的地址
+* len：消息长度
+* flag：消息模式（0）
+* src_addr：通用套接字地址
+* addrlen：通用套接字长度
 
