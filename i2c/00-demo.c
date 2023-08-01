@@ -15,7 +15,7 @@ void demo_i2c_start(void)
     data_clear();
     demo_i2c_dalay();
     // 空闲时钟为低电平
-    data_clear();
+    clk_clear();
 }
 
 // 终止信号
@@ -29,7 +29,7 @@ void demo_i2c_stop(void)
     data_set();
     demo_i2c_dalay();
     // 空闲时钟为高电平
-    data_clear();
+    clk_clear();
 }
 
 int main(int argc, char const *argv[])
