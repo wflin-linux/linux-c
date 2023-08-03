@@ -2,7 +2,9 @@
 
 #include "Hello.h"
 
+using namespace std;
+
 void Hello::print()
 {
-    std::cout << "hello headers" << std::endl;
+    cout << "hello headers" << endl;
 }

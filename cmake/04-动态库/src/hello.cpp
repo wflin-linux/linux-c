@@ -1,8 +1,11 @@
+/*实现了Hello::print()*/
 #include <iostream>
 
-#include "Hello.h"
+#include "shared/Hello.h"
+
+using namespace std;
 
 void Hello::print()
 {
-    std::cout << "hello headers" << std::endl;
+    std::cout << "Hello Shared Library!" << std::endl;
 }
