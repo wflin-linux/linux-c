@@ -415,3 +415,65 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 * src_addr：通用套接字地址
 * addrlen：通用套接字长度
 
+
+
+
+# tcp
+
+## 常见API
+
+```c
+#include <sys/socket.h>
+int socket (int family, int type, int protocol);
+int bind (int sockfd, struct sockaddr *my_addr, int addrlen);
+int listen (int sockfd, int backlog);
+int accept (int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int connect (int sockfd, struct sockaddr *serv_addr, int addrlen);
+int send (int sockfd, const void *msg, int len, int flags);
+int recv (int sockfd, void *buff, int len, unsigned int flags);
+```
+
+## server 端
+ * 建立套接字
+ * 绑定端口
+ * 设置最大连接数
+ * 开启监听
+ * 接收客户端的接入
+ * 对接入的客户端响应
+ * 关流
+## client 端
+ * 检测输入参数（可选）
+ * 创建套接字
+ * 绑定接收端口
+ * 连接到 server
+ * 发送消息
+### 核心代码流程
+```c
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        perror("socket");
+        exit(1);
+    }
+    printf("socket fd = %d\n", sockfd);
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    memset(&(serv_addr.sin_zero), 0, 8);
+
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) == -1)
+    {
+        perror("connect");
+        exit(1);
+    }
+    printf("connect success!\n");
+
+    if ((sendbytes = send(sockfd, buf, BUFF_SIZE, 0)) == -1)
+    {
+        perror("send");
+        exit(1);
+    }
+    // printf ("Send : %s\n", buf);
+    close(sockfd);
+    exit(0);
+```
