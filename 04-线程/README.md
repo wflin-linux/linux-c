@@ -30,6 +30,43 @@
 
 ![](https://images0.cnblogs.com/blog2015/570460/201507/041632598968698.png)
 
+## 常用API
+
+```c
+int pthread_create(pthread_t *tid, const pthread_attr_t *attr, void *(*func) (void *), void *arg);
+int pthread_join (pthread_t tid, void ** status);
+pthread_t pthread_self (void);
+int pthread_detach (pthread_t tid);
+void pthread_exit (void *status);
+```
+
+### 参数介绍
+
+pthread_create用于创建一个线程，成功返回0，否则返回Exxx（为正数）。
+
+- pthread_t *tid：线程id的类型为pthread_t，通常为无符号整型，当调用pthread_create成功时，通过*tid指针返回。
+- const pthread_attr_t *attr：指定创建线程的属性，如线程优先级、初始栈大小、是否为守护进程等。可以使用NULL来使用默认值，通常情况下我们都是使用默认值。
+- void *(*func) (void *)：函数指针func，指定当新的线程创建之后，将执行的函数。
+- void *arg：线程将执行的函数的参数。如果想传递多个参数，请将它们封装在一个结构体中。
+- pthread_join用于等待某个线程退出，成功返回0，否则返回Exxx（为正数）。
+
+pthread_t tid：指定要等待的线程ID
+
+- void ** status：如果不为NULL，那么线程的返回值存储在status指向的空间中（这就是为什么status是二级指针的原因！这种才参数也称为“值-结果”参数）。
+- pthread_self用于返回当前线程的ID。
+
+pthread_detach用于是指定线程变为分离状态，就像进程脱离终端而变为后台进程类似。成功返回0，否则返回Exxx（为正数）。变为分离状态的线程，如果线程退出，它的所有资源将全部释放。而如果不是分离状态，线程必须保留它的线程ID，退出状态直到其它线程对它调用了pthread_join。
+
+进程也是类似，这也是当我们打开进程管理器的时候，发现有很多僵死进程的原因！也是为什么一定要有僵死这个进程状态。
+
+pthread_exit用于终止线程，可以指定返回值，以便其他线程通过pthread_join函数获取该线程的返回值。
+
+void *status：指针线程终止的返回值。
+
+
+
+
+
 **1.线程创建**
 
 ```c
@@ -150,12 +187,4 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex);
 
 4. **造成死锁原因**
 
-   首先程序中必须有两把锁，当线程1获得一把锁的时候还想要获得另一把锁，线程2手中拿着线程1想要获得的那把锁，同时线程2也想拿到线程1的那把锁。然后都不能往下去解锁，造成线程死锁 案例请看 	mutex_die_Pthread.c
-
-5. 
-
-6. 
-
-7. 
-
-8. 
+   首先程序中必须有两把锁，当线程1获得一把锁的时候还想要获得另一把锁，线程2手中拿着线程1想要获得的那把锁，同时线程2也想拿到线程1的那把锁。然后都不能往下去解锁，造成线程死锁 案例请看 	mutex_die_Pthread.c 
