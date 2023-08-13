@@ -33,7 +33,7 @@ int main()
 
     result = get_number(); // 调用函数，获取这个随机数
 
-    printf("Content-Type:text/html;charset=utf-8\r\n");
+    printf("Content-Type:text/json;charset=utf-8\r\n");
     printf("\r\n"); // http协议请求格式，这样浏览器才能解析出这条信息。
 
     printf("%s\n", result);

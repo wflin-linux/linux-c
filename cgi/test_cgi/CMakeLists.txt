@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 # set the project name
-project(cgi.cgi)
+project(test_cgi.cgi)
 
 
-SET(SRC_LIST 00-cgi-demo.c)
+SET(SRC_LIST test_cgi.c)
 
 # add the executable
 add_executable(${PROJECT_NAME} ${SRC_LIST})

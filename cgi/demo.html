@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+
+<body>
+    <div id="app">
+        <el-input v-model="input" placeholder="请输入内容"></el-input>
+        <el-button @click="getdata()">get</el-button>
+        <el-button @click="postdata()">post</el-button>
+    </div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                visible: false,
+                input: '',
+            }
+        },
+        methods: {
+            getdata() {
+                axios.get('/cgi-bin/test_cgi.cgi', {
+                    params: {
+                        msg: this.input
+                    }
+                }).then(res => {
+                    console.log(res.data);
+                    this.temp = res.data.temperature
+                })
+            },
+            postdata() {
+                axios.post('/cgi-bin/test_cgi.cgi', {
+                    msg: this.input
+                }).then(res => {
+                    console.log(res.data);
+                    this.temp = res.data.temperature
+                })
+            },
+        }
+
+    })
+</script>
+
+</html>
