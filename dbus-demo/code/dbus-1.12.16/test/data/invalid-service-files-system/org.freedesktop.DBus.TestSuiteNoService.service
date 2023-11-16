@@ -1,0 +1,4 @@
+[D-BUS Service]
+Exec=/home/ubuntu/dbus-demo/code/dbus-1.12.16/test/test-service
+User=anyrandomuser
+

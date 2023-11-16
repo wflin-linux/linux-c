@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.DBus.TestSuiteSegfaultService
+Exec=/home/ubuntu/dbus-demo/code/dbus-1.12.16/test/test-segfault
+

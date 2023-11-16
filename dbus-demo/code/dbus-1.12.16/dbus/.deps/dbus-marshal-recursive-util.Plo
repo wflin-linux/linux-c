@@ -1,0 +1,6 @@
+dbus-marshal-recursive-util.lo: dbus-marshal-recursive-util.c \
+ /usr/include/stdc-predef.h ../config.h
+
+/usr/include/stdc-predef.h:
+
+../config.h:

@@ -1,0 +1,30 @@
+libdbus_1_la-dbus-file.lo: dbus-file.c /usr/include/stdc-predef.h \
+ ../config.h dbus-file.h ../dbus/dbus-string.h ../dbus/dbus-macros.h \
+ ../dbus/dbus-types.h /usr/lib/gcc/x86_64-linux-gnu/9/include/stddef.h \
+ ../dbus/dbus-arch-deps.h ../dbus/dbus-memory.h \
+ /usr/lib/gcc/x86_64-linux-gnu/9/include/stdarg.h ../dbus/dbus-errors.h \
+ ../dbus/dbus-protocol.h
+
+/usr/include/stdc-predef.h:
+
+../config.h:
+
+dbus-file.h:
+
+../dbus/dbus-string.h:
+
+../dbus/dbus-macros.h:
+
+../dbus/dbus-types.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/9/include/stddef.h:
+
+../dbus/dbus-arch-deps.h:
+
+../dbus/dbus-memory.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/9/include/stdarg.h:
+
+../dbus/dbus-errors.h:
+
+../dbus/dbus-protocol.h:

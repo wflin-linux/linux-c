@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.freedesktop.DBus.TestSuiteEchoService
+Exec=/home/ubuntu/dbus-demo/code/dbus-1.12.16/test/test-service

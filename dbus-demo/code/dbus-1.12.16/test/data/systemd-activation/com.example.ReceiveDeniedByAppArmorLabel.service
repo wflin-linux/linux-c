@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.example.ReceiveDeniedByAppArmorLabel
+Exec=/bin/false ReceiveDeniedByAppArmorLabel
+SystemdService=dbus-com.example.ReceiveDeniedByAppArmorLabel.service
+AssumedAppArmorLabel=/home/ubuntu/dbus-demo/code/dbus-1.12.16/test/test-apparmor-activation//com.example.ReceiveDeniedByAppArmorLabel

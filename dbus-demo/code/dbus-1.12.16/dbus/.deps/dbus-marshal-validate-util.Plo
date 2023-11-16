@@ -1,0 +1,6 @@
+dbus-marshal-validate-util.lo: dbus-marshal-validate-util.c \
+ /usr/include/stdc-predef.h ../config.h
+
+/usr/include/stdc-predef.h:
+
+../config.h:

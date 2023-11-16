@@ -1,0 +1,6 @@
+dbus-marshal-byteswap-util.lo: dbus-marshal-byteswap-util.c \
+ /usr/include/stdc-predef.h ../config.h
+
+/usr/include/stdc-predef.h:
+
+../config.h:
